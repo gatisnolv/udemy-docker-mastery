@@ -2,11 +2,19 @@
 # in this Assignment, change it to work with the default drupal image, and change
 # postgres to use a Swarm secret. More info in the README.md file.
 
+# My own notes about running this example: 
+# Have at least a 2 node swarm ready.
+# Copy this file to a manager node.
+# Store a password in Swarm Secrets with 'echo "secret_password" | docker secret create db_password -'
+# Deploy the stack with 'docker stack deploy -c docker-compose.yml name_of_stack'
+# Test by going to the ip of one of the nodes on port 8080, attempt to do the setup using the 'secret_password' used earlier when creating the stack, don't forget in the setup under Advanced Setting to change the host from localhost to 'postgres' to resolve the DNS of the postgres service.
+
+version: '3.9'
+
 services:
 
   drupal:
-    image: custom-drupal
-    build: .
+    image: drupal:9.3.13
     ports:
       - "8080:80"
     volumes:
@@ -17,8 +25,10 @@ services:
  
   postgres:
     image: postgres:14.3
+    secrets:
+      - db_password
     environment:
-      - POSTGRES_PASSWORD=mypasswd
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
     volumes:
       - drupal-data:/var/lib/postgresql/data
 
@@ -28,3 +38,7 @@ volumes:
   drupal-profiles:
   drupal-sites:
   drupal-themes:
+
+secrets:
+  db_password:
+    external: true
